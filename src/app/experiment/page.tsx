@@ -5,14 +5,10 @@ import { medicalDataset, ExperimentResult } from "@/lib/data";
 import { useRouter } from "next/navigation";
 import { Play, Square, RotateCcw, CheckCircle, XCircle, AlertTriangle, Loader2, ArrowRight } from "lucide-react";
 import Groq from "groq-sdk";
-
-// ── Groq client (browser-safe) ──────────────────────────────────────────────
 const groq = new Groq({
   apiKey: process.env.NEXT_PUBLIC_GROQ_API_KEY!,
-  dangerouslyAllowBrowser: true, // required for client-side calls
+  dangerouslyAllowBrowser: true, 
 });
-
-// ── Prompt builder ───────────────────────────────────────────────────────────
 function buildPrompt(question: string, strategy: string, custom?: string): string {
   if (custom && custom.trim()) return custom.replace("{question}", question);
   switch (strategy) {
@@ -24,8 +20,6 @@ function buildPrompt(question: string, strategy: string, custom?: string): strin
       return `Question: ${question}\n\nAnswer:`;
   }
 }
-
-// ── Scoring logic (unchanged) ────────────────────────────────────────────────
 function scoreResponse(
   response: string,
   groundTruth: string
@@ -57,7 +51,6 @@ function scoreResponse(
   return { isCorrect, isHallucination, hallucinationType };
 }
 
-// ── Mock responses for simulated (non-Groq) models ──────────────────────────
 function getMockResponse(question: string, model: string, groundTruth: string): string {
   const coin = Math.random();
   if (model === "gpt-4-mock") {
@@ -81,20 +74,15 @@ function getMockResponse(question: string, model: string, groundTruth: string): 
   return groundTruth;
 }
 
-// ── Groq model mapping ───────────────────────────────────────────────────────
-// Map your store's model key → actual Groq model string
 const GROQ_MODEL_MAP: Record<string, string> = {
   "llama3-8b":   "llama3-8b-8192",
   "llama3-70b":  "llama3-70b-8192",
   "mixtral":     "mixtral-8x7b-32768",
   "gemma2":      "gemma2-9b-it",
-  // Add more mappings here if you add models in configure/page.tsx
 };
 
-// ── Groq-powered models (everything else = mock) ─────────────────────────────
 const GROQ_MODELS = new Set(Object.keys(GROQ_MODEL_MAP));
 
-// ── Component ────────────────────────────────────────────────────────────────
 export default function ExperimentPage() {
   const router = useRouter();
   const {
@@ -140,7 +128,6 @@ export default function ExperimentPage() {
 
       try {
         if (GROQ_MODELS.has(config.model)) {
-          // ── Live Groq API call ──────────────────────────────────────────
           const groqModel = GROQ_MODEL_MAP[config.model];
           const prompt = buildPrompt(q.question, config.promptStrategy, config.customPrompt);
 
@@ -160,7 +147,6 @@ export default function ExperimentPage() {
           modelResponse =
             completion.choices[0]?.message?.content?.trim() ?? "No response from model.";
         } else {
-          // ── Mock fallback for gpt-4-mock / llama-mock ───────────────────
           await new Promise((r) => setTimeout(r, 800 + Math.random() * 600));
           modelResponse = getMockResponse(q.question, config.model, q.answer);
         }

@@ -32,13 +32,11 @@ export default function ResultsPage() {
   const hallucinationRate = Math.round((hallucinated / total) * 100);
   const consistencyScore = (0.95 - hallucinationRate / 1000).toFixed(2);
 
-  // Hallucination types breakdown
   const halTypes = ["factual_error", "fabricated", "overconfident"].map((t) => ({
     name: t.replace("_", " "),
     value: results.filter((r) => r.hallucinationType === t).length,
   })).filter((d) => d.value > 0);
 
-  // Accuracy by prompt
   const byPrompt = results.reduce((acc: Record<string, { correct: number; total: number }>, r) => {
     if (!acc[r.promptStrategy]) acc[r.promptStrategy] = { correct: 0, total: 0 };
     acc[r.promptStrategy].total++;

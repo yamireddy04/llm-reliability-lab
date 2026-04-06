@@ -14,29 +14,24 @@ export default function InsightsPage() {
 
   const handleDownload = () => {
     const report = `LLM RELIABILITY LAB — RESEARCH REPORT
-========================================
 Generated: ${new Date().toLocaleDateString()}
 
 EXPERIMENT CONFIGURATION
-------------------------
 Model: ${results[0]?.model ?? "N/A"}
 Prompt Strategy: ${results[0]?.promptStrategy ?? "N/A"}
 Total Questions: ${total}
 
 KEY METRICS
------------
 Accuracy: ${accuracy}%
 Hallucination Rate: ${hallucinationRate}%
 Consistency Score: ${(0.95 - hallucinationRate / 1000).toFixed(2)}
 
 HALLUCINATION BREAKDOWN
------------------------
 Factual Errors: ${results.filter((r) => r.hallucinationType === "factual_error").length}
 Fabricated Information: ${results.filter((r) => r.hallucinationType === "fabricated").length}
 Overconfident Wrong: ${results.filter((r) => r.hallucinationType === "overconfident").length}
 
 DETAILED RESULTS
-----------------
 ${results.map((r, i) => `
 Q${i + 1}: ${r.question}
 Ground Truth: ${r.groundTruth}
@@ -45,19 +40,16 @@ Status: ${r.isCorrect ? "CORRECT" : r.isHallucination ? `HALLUCINATION (${r.hall
 `).join("\n")}
 
 CONCLUSION
-----------
 ${accuracy >= 70
   ? `The ${results[0]?.model} model demonstrated acceptable accuracy (${accuracy}%) on medical QA tasks with a ${results[0]?.promptStrategy} prompting strategy. Hallucination rate of ${hallucinationRate}% ${hallucinationRate <= 20 ? "falls within acceptable research thresholds" : "exceeds safe clinical deployment thresholds"}.`
   : `The model showed below-threshold accuracy (${accuracy}%), indicating limitations in medical knowledge recall. Additional fine-tuning or retrieval-augmented generation (RAG) should be considered before clinical deployment.`}
 
 RECOMMENDATIONS
----------------
 1. ${accuracy < 70 ? "Consider RAG architecture to ground responses in verified medical literature." : "Model shows promise; proceed to larger-scale evaluation."}
 2. ${hallucinationRate > 15 ? "Implement response validation layer before clinical use." : "Hallucination rate acceptable; maintain human oversight."}
 3. Chain-of-thought prompting may improve accuracy on complex multi-step medical reasoning.
 4. All LLM outputs in clinical settings must be reviewed by qualified medical professionals.
 
----
 LLM Reliability Lab | AI Safety Research
 `;
 
