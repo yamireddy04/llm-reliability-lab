@@ -11,7 +11,7 @@
 
 <br/>
 
-[🌐 Live Demo](https://llm-reliability-lab.vercel.app) · [📄 Project Write-up](./paper/main.pdf) · [🚀 Quick Start](#1️⃣1️⃣-how-to-run) · [📊 Results](#7️⃣-results)
+[🌐 Live Demo](https://llm-reliability-lab.vercel.app) · [📄 Project Write-up](./paper/LLM.pdf) · [🚀 Quick Start](#1️⃣1️⃣-how-to-run) · [📊 Results](#7️⃣-results)
 
 </div>
 
