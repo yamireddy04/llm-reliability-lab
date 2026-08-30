@@ -1,6 +1,6 @@
 # 🔬 LLM Reliability Lab
 
-**A browser-based evaluation framework for measuring hallucination and prompt-strategy sensitivity in LLMs on medical question answering** — built as a research instrument comparing keyword-overlap scoring against an LLM-as-judge semantic comparator, with Wilson confidence intervals and a phrasing-ambiguity axis baked into the dataset itself.
+A browser-based evaluation framework for measuring hallucination and prompt-strategy sensitivity in LLMs on medical question answering — built as a research instrument comparing keyword-overlap scoring against an LLM-as-judge semantic comparator, with Wilson confidence intervals and a phrasing-ambiguity axis baked into the dataset itself.
 
 **Live Demo:** https://llm-reliability-lab.vercel.app
 
@@ -21,7 +21,7 @@ Most LLM QA benchmarks report a single aggregate accuracy number and stop there.
 
 ---
 
-## 🧭 Overview
+## 📌 Overview
 
 LLM Reliability Lab is a Next.js application where a person selects a model, a prompting strategy, and a sample size, runs a live evaluation against a 40-question medical QA dataset, and gets back accuracy, hallucination-type breakdowns, Wilson-interval confidence bounds, and a judge-vs-heuristic agreement rate — all computed client-side from real API responses, not pre-baked numbers. The dataset, scoring logic, and statistics layer are implemented as plain TypeScript modules (`src/lib/`) so the evaluation methodology is auditable independently of the UI.
 
@@ -37,11 +37,17 @@ Three gaps motivated the design:
 
 ---
 
-## 🧩 What It Does
+## ✨ What It Does
 
-**Dataset Explorer** (`/dataset`) lists all 40 questions with a text search (matches question text or category) and dropdown filters for category and difficulty. Each question card shows its difficulty and category as badges; a person can expand any question to view its ground-truth answer and explanation, and pre-select a specific subset to run instead of the first *N* questions. The dataset's `ambiguityType` tag is used downstream for results breakdowns (see Insights, below) but is not currently exposed as a filter or badge on this page.
+- **Dataset Explorer** (`/dataset`) — lists all 40 questions with a text search (matches question text or category) and dropdown filters for category and difficulty. Each question card shows its difficulty and category as badges; a person can expand any question to view its ground-truth answer and explanation, and pre-select a specific subset to run instead of the first *N* questions. The dataset's `ambiguityType` tag is used downstream for the Insights breakdown but is not currently exposed as a filter or badge on this page (see Future Work).
+- **Configure** (`/configure`) — selects a model, a prompt strategy (zero-shot, structured, or chain-of-thought, each with a visible example template), an optional custom prompt template using a `{question}` placeholder, and a sample count from 1 up to the full dataset.
+- **Experiment Runner** (`/experiment`) — executes the run question-by-question. For live models it calls the Groq API and streams each response into the UI as it arrives; for simulated/baseline models it generates a response locally with a short artificial delay instead. Every response is scored with the keyword-match heuristic, and — for the three Groq-backed models only — additionally sent to the LLM-as-judge for an independent semantic correctness call. A run can be stopped mid-way or reset.
+- **Results Dashboard** (`/results`) — renders accuracy and hallucination-rate bar charts, a hallucination-type pie chart, a per-prompt-strategy comparison, and a performance radar chart, using Recharts.
+- **Hallucination Analysis** (`/hallucination`) — shows every hallucinated response side-by-side with its ground truth, grouped by failure type (factual error, fabricated, overconfident), each with an explanation of the detection rule that flagged it.
+- **Insights & Report** (`/insights`) — generates a structured research-style summary — abstract, key findings (including the precise-vs-ambiguous accuracy breakdown and the judge agreement rate), recommendations, and a citation block — exportable as a `.txt` file.
+- **Ethics & About** (`/ethics`) — documents risk analysis (hallucination in clinical contexts, bias and fairness, reliability/consistency, patient autonomy and consent) and a set of responsible-AI principles for clinical LLM deployment.
 
-**Configure** (`/configure`) selects a model, a prompt strategy (zero-shot, structured, or chain-of-thought, each with a visible example template), an optional custom prompt template using a `{question}` placeholder, and a sample count from 1 up to the full dataset. The selectable models are:
+**Selectable models:**
 
 | Model | Provider | Badge |
 |---|---|---|
@@ -53,16 +59,6 @@ Three gaps motivated the design:
 | Ground-Truth Oracle | Scripted baseline | BASELINE |
 
 "LIVE API" models make a real network call through `/api/groq` to Groq Cloud for every question. "SIMULATED" models run a scripted, weighted-random response generator (`getMockResponse` in `src/app/experiment/page.tsx`) that probabilistically returns either the ground truth or a generic wrong answer — useful for exercising the UI and scoring pipeline without API calls, but not a reflection of real model behavior. "BASELINE" (the oracle) always returns the exact ground-truth answer and exists purely as a fixed reference point, not a model under test.
-
-**Experiment Runner** (`/experiment`) executes the run question-by-question. For the three LIVE API models it calls the live Groq API and streams each response into the UI as it arrives; for SIMULATED and BASELINE models it generates a response locally with a short artificial delay instead. Every response is scored with the keyword-match heuristic, and — for the three Groq-backed models only — additionally sent to the LLM-as-judge for an independent semantic correctness call. A run can be stopped mid-way or reset.
-
-**Results Dashboard** (`/results`) renders accuracy and hallucination-rate bar charts, a hallucination-type pie chart, a per-prompt-strategy comparison, and a radar view, using Recharts.
-
-**Hallucination Analysis** (`/hallucination`) shows every hallucinated response side-by-side with its ground truth, grouped by failure type (factual error, fabricated, overconfident), each with an explanation of the detection rule that flagged it.
-
-**Insights & Report** (`/insights`) generates a structured research-style summary — abstract, key findings (including the precise-vs-ambiguous accuracy breakdown and the judge agreement rate), recommendations, and a citation block — exportable as a `.txt` file.
-
-**Ethics & About** (`/ethics`) documents risk analysis (hallucination, bias and fairness, reliability/consistency, patient autonomy) and a set of responsible-AI principles for clinical LLM deployment.
 
 ---
 
@@ -89,7 +85,7 @@ Zustand store (results[]) ──► Results / Hallucination / Insights pages
 
 The Groq API key lives server-side in `src/app/api/groq/route.ts` (`GROQ_API_KEY`, read via `process.env`) and is never sent to the browser; both the experiment runner and the judge call this same route handler rather than hitting Groq directly from client code.
 
-Three additional model options — a ground-truth oracle and two scripted mock responders — are available in the configure step as non-API baselines for comparing real model behavior against deterministic reference points without consuming API quota; only the three Groq-backed models listed above go through the live scoring and judging pipeline. There is no Anthropic API integration in the current codebase (see Limitations).
+Three additional model options — a ground-truth oracle and two scripted mock responders — are available in the configure step as non-API baselines for comparing real model behavior against deterministic reference points without consuming API quota; only the three Groq-backed models listed above go through the live scoring and judging pipeline. There is no Anthropic API integration in the current codebase (see Limitations for a related leftover config artifact).
 
 ---
 
@@ -128,7 +124,7 @@ Three additional model options — a ground-truth oracle and two scripted mock r
 
 **Category coverage:** Pharmacology (7), Immunology (5), Pathology (4), Endocrinology (3), Microbiology (3), Neurology (3), Radiology (3), Biochemistry (2), Anatomy (2), Genetics (2), Clinical Chemistry (2), Physiology (2), Nephrology (1), Nutrition (1).
 
-`ambiguityType: "constructed"` entries are deliberately written with an embedded but incorrect premise (for example, attributing a known condition to the wrong mechanism mid-question) to test whether a model corrects the premise or echoes it back — a probe for sycophantic agreement rather than recall failure.
+`sourceType: "constructed"` entries are deliberately written with an embedded but incorrect premise (for example, attributing a known condition to the wrong mechanism mid-question) to test whether a model corrects the premise or echoes it back — a probe for sycophantic agreement rather than recall failure.
 
 ---
 
@@ -148,7 +144,7 @@ Three things are worth calling out, all consistent with this being one n=40 run 
 - **Ambiguous-phrasing questions scored higher than precise-phrasing questions in every condition** (e.g. 100% vs. 76% under zero-shot) — the opposite of what the `ambiguityType` tag is meant to probe. Rather than concluding the model handles ambiguity well, this is flagged as a likely artifact of the keyword-overlap scorer: if ambiguous-phrasing ground-truth answers in this dataset tend to be shorter or more generic, they clear the ≥40% keyword threshold more easily regardless of whether the model actually resolved the ambiguity. The judge agreement rate (75–85%, not 100%) supports treating this gap with caution rather than as a clean result.
 - **The hallucination-type mix shifted with strategy even as the total count dropped.** Zero-shot and structured produced only `factual_error` hallucinations; CoT had fewer hallucinations overall (5 vs. 10 under structured) but was the only strategy where `overconfident` and `fabricated` were flagged at all. Since those two classifiers are length-gated (see Scoring Methodology), this may reflect the scorer reacting to longer CoT-style responses rather than a genuine behavioral shift — worth checking against the transcripts in `findings-raw.json` before treating it as a real finding.
 
-Raw per-question responses are in `findings-raw.json` (not committed); the run is reproducible against the live API with `scripts/generate-findings.ts`, which imports this project's actual `data.ts` and `stats.ts` rather than reimplementing them.
+Raw per-question responses are in `findings-raw.json` (generated locally, not committed to the repository). The run is reproducible against the live API with `scripts/generate-findings.ts`, which imports this project's actual `data.ts` and `stats.ts` rather than reimplementing them — though `scoreResponse()` and `buildPrompt()` are duplicated in the script rather than imported from `experiment/page.tsx`, so a change to scoring logic in the app would need to be mirrored in the script to keep future runs comparable (see Limitations).
 
 ---
 
@@ -165,6 +161,41 @@ Raw per-question responses are in `findings-raw.json` (not committed); the run i
 
 ---
 
+## 🔒 Security
+
+- `GROQ_API_KEY` is read server-side only, inside the `/api/groq` route handler; it is not exposed to client-side JavaScript.
+- `.env.local` is excluded from version control via `.gitignore` (`.env*` is ignored); it has never been committed to this repository's git history.
+- The Groq API key used in earlier development was rotated after exposure outside this repository. The current key is supplied only via local `.env.local` / the Vercel project's environment variables and is not present in any tracked file or commit.
+
+---
+
+## ⚠️ Limitations
+
+- **Keyword-overlap scorer is a heuristic.** It can mis-score a semantically correct but differently-worded response; this is why the LLM-as-judge agreement check exists, though the judge itself is also a single model call and can be wrong. The Sample Findings run above shows a concrete instance of this: ambiguous-phrasing accuracy exceeded precise-phrasing accuracy in every condition, plausibly because shorter ground-truth answers are easier to keyword-match, not because ambiguity was genuinely resolved better.
+- **Small benchmark.** 40 questions limit statistical power; Wilson intervals are reported specifically because point estimates alone would be misleading at this sample size.
+- **Single pass per question by default.** A single run's accuracy is one sample from a stochastic distribution; `consistencyScore()` exists in `stats.ts` for repeated-run agreement, but the UI doesn't yet drive multiple runs per question.
+- **Single-rater LLM-as-judge.** One judge call per response, no inter-rater or multi-judge agreement.
+- **No persistence.** Results live only in the in-memory Zustand store for the current session and clear on refresh.
+- **`generate-findings.ts` duplicates scoring logic instead of importing it.** The script imports the real `data.ts` and `stats.ts`, but its `scoreResponse()` and `buildPrompt()` are copy-pasted from `experiment/page.tsx` rather than shared — the two can silently drift out of sync if the in-app scorer changes.
+- **`GROQ_MODEL_MAP` has an orphaned entry.** The map includes `"gpt-oss-20b": "openai/gpt-oss-20b"`, but the Configure page's model list never offers it, so this mapping is currently dead code (see Future Work).
+- **A vestigial Anthropic-related response header remains in `next.config.ts`** (`anthropic-dangerous-direct-browser-access: true`), left over from before commit `65b7e59` replaced a prior Anthropic-based integration with Groq. It has no functional effect today since no Anthropic calls are made anywhere in the codebase, but it should be removed for cleanliness.
+- **Resolved: model-ID routing bug (commit `65b7e59`).** An earlier version listed a "Claude Sonnet 4 (Anthropic)" model marked "LIVE API" with no real Anthropic route behind it; an unrecognized-model fallback silently returned the ground-truth answer instead, so every "live" run on that entry was correct by construction, not by inference. Fixed by removing the entry, routing all live models through an explicit `GROQ_MODEL_MAP`, and making the fallback throw instead of silently defaulting. Disclosed here since the commit history shows it regardless.
+
+---
+
+## 🔭 Future Work
+
+- Drive multiple runs per question through the existing `consistencyScore()` function to report run-to-run consistency in the UI, not just compute it.
+- Expand the dataset beyond 40 questions and add source citations for each ground truth answer.
+- Add a second independent judge model and report inter-judge agreement alongside judge-vs-heuristic agreement.
+- Persist experiment runs (e.g., to a lightweight database) so results survive a page refresh and can be compared across sessions.
+- Add CSV/JSON export alongside the existing TXT report for downstream statistical analysis.
+- Surface `ambiguityType` as a visible badge and filter on the Dataset Explorer, matching how it's already used in the Insights breakdown.
+- Either wire the orphaned `gpt-oss-20b` mapping into the Configure page's model list or remove it from `GROQ_MODEL_MAP` to keep the two in sync.
+- Remove the vestigial `anthropic-dangerous-direct-browser-access` header from `next.config.ts` and share scoring logic between `experiment/page.tsx` and `scripts/generate-findings.ts` instead of duplicating it.
+
+---
+
 ## 🛠️ Tech Stack
 
 | Layer | Technology |
@@ -177,6 +208,29 @@ Raw per-question responses are in `findings-raw.json` (not committed); the run i
 | Animations | Framer Motion |
 | Icons | Lucide React |
 | Deployment | Vercel |
+
+---
+
+## 🚀 Local Setup
+
+**Prerequisites:** Node.js 18+, a Groq API key (free at [console.groq.com](https://console.groq.com)).
+
+```bash
+git clone https://github.com/yamini-nlp/llm-reliability-lab.git
+cd llm-reliability-lab
+npm install
+```
+
+`.env.local`:
+```
+GROQ_API_KEY=gsk_your_key_here
+```
+
+```bash
+npm run dev
+```
+
+Visit `http://localhost:3000`. Then: **Dataset** to browse and optionally pre-select questions → **Configure** to set model, strategy, and sample count → **Experiment** to run it live → **Results / Hallucination / Insights** for analysis and report export.
 
 ---
 
@@ -211,63 +265,8 @@ llm-reliability-lab/
 
 ---
 
-## 🚀 Local Setup
-
-**Prerequisites:** Node.js 18+, a Groq API key (free at [console.groq.com](https://console.groq.com)).
-
-```bash
-git clone https://github.com/yamini-nlp/llm-reliability-lab.git
-cd llm-reliability-lab
-npm install
-```
-
-`.env.local`:
-
-```
-GROQ_API_KEY=gsk_your_key_here
-```
-
-```bash
-npm run dev
-```
-
-Visit `http://localhost:3000`. Then: **Dataset** to browse and optionally pre-select questions → **Configure** to set model, strategy, and sample count → **Experiment** to run it live → **Results / Hallucination / Insights** for analysis and report export.
-
----
-
-## 🔒 Security
-
-- `GROQ_API_KEY` is read server-side only, inside the `/api/groq` route handler; it is not exposed to client-side JavaScript.
-- `.env.local` is excluded from version control via `.gitignore` (`.env*` is ignored); it has never been committed to this repository's git history.
-- The Groq API key used in earlier development was rotated after exposure outside this repository. The current key is supplied only via local `.env.local` / the Vercel project's environment variables and is not present in any tracked file or commit.
-
----
-
-## ⚠️ Limitations
-
-- **Keyword-overlap scorer is a heuristic.** It can mis-score a semantically correct but differently-worded response; this is why the LLM-as-judge agreement check exists, though the judge itself is also a single model call and can be wrong. The Sample Findings run above shows a concrete instance of this: ambiguous-phrasing accuracy exceeded precise-phrasing accuracy in every condition, plausibly because shorter ground-truth answers are easier to keyword-match, not because ambiguity was genuinely resolved better.
-- **Small benchmark.** 40 questions limit statistical power; Wilson intervals are reported specifically because point estimates alone would be misleading at this sample size.
-- **Single pass per question by default.** A single run's accuracy is one sample from a stochastic distribution; `consistencyScore()` exists in `stats.ts` for repeated-run agreement, but the UI doesn't yet drive multiple runs per question.
-- **Single-rater LLM-as-judge.** One judge call per response, no inter-rater or multi-judge agreement.
-- **No persistence.** Results live only in the in-memory Zustand store for the current session and clear on refresh.
-- **Resolved: model-ID routing bug (commit `65b7e59`).** An earlier version listed a "Claude Sonnet 4 (Anthropic)" model marked "LIVE API" with no real Anthropic route behind it; an unrecognized-model fallback silently returned the ground-truth answer instead, so every "live" run on that entry was correct by construction, not by inference. Fixed by removing the entry, routing all live models through an explicit `GROQ_MODEL_MAP`, and making the fallback throw instead of silently defaulting. Disclosed here since the commit history shows it regardless.
-
----
-
-## 🔭 Future Work
-
-- Drive multiple runs per question through the existing `consistencyScore()` function to report run-to-run consistency in the UI, not just compute it.
-- Expand the dataset beyond 40 questions and add source citations for each ground truth answer.
-- Add a second independent judge model and report inter-judge agreement alongside judge-vs-heuristic agreement.
-- Persist experiment runs (e.g., to a lightweight database) so results survive a page refresh and can be compared across sessions.
-- Add CSV/JSON export alongside the existing TXT report for downstream statistical analysis.
-- Surface `ambiguityType` as a visible badge and filter on the Dataset Explorer, matching how it's already used in the Insights breakdown.
-- Either wire the orphaned `gpt-oss-20b` mapping into the Configure page's model list or remove it from `GROQ_MODEL_MAP` to keep the two in sync.
-
----
-
 <div align="center">
 
-Built by Yamini G
+*Built by [Yamini G](https://github.com/yamini-nlp)*
 
 </div>
